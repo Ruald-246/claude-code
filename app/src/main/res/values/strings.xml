@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Account Connector</string>
+    <string name="account_type">com.example.accountconnector</string>
+    <string name="login_title">Sign In</string>
+    <string name="username_hint">Username</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Sign In</string>
+    <string name="logging_in">Signing in…</string>
+    <string name="login_error">Login failed. Please try again.</string>
+    <string name="network_error">Network error. Please check your connection.</string>
+</resources>
