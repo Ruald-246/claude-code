@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystic Chest Hunter</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+header {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1.2em;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.game-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 968px) {
+    .game-area {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chest-shop {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.chest-shop h2 {
+    margin-bottom: 15px;
+    font-size: 1.8em;
+}
+
+.chest-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.chest-card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chest-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.chest-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chest-card.disabled:hover {
+    transform: none;
+}
+
+.chest-info {
+    flex: 1;
+}
+
+.chest-name {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.chest-price {
+    color: #ffd700;
+    font-size: 1.1em;
+}
+
+.chest-chance {
+    font-size: 0.9em;
+    color: #ccc;
+    margin-top: 5px;
+}
+
+.chest-icon {
+    font-size: 3em;
+}
+
+.chest-card[data-rarity="common"] { border-color: #9d9d9d; }
+.chest-card[data-rarity="uncommon"] { border-color: #1eff00; }
+.chest-card[data-rarity="rare"] { border-color: #0070dd; }
+.chest-card[data-rarity="epic"] { border-color: #a335ee; }
+.chest-card[data-rarity="legendary"] { border-color: #ff8000; }
+
+.opening-area {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.opening-area h2 {
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.opening-area.hidden {
+    display: none;
+}
+
+.chest-animation {
+    font-size: 8em;
+    margin: 20px 0;
+    animation: shake 0.5s infinite;
+}
+
+@keyframes shake {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+.chest-animation.opening {
+    animation: openChest 1s ease-out forwards;
+}
+
+@keyframes openChest {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(10deg); }
+    100% { transform: scale(0.8) rotate(0deg); opacity: 0; }
+}
+
+.reward-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.reward-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    min-width: 150px;
+    text-align: center;
+    border: 2px solid;
+    animation: popIn 0.5s ease-out;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.reward-item .item-icon {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.reward-item .item-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.reward-item .item-value {
+    color: #ffd700;
+}
+
+.inventory {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.inventory-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.inventory-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.inventory-item:hover {
+    transform: scale(1.05);
+}
+
+.inventory-item .item-icon {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.inventory-item .item-name {
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.inventory-item .item-type {
+    font-size: 0.8em;
+    color: #ccc;
+    margin-bottom: 5px;
+}
+
+.inventory-item .item-value {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.sell-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #ff4444;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background 0.2s ease;
+}
+
+.sell-btn:hover {
+    background: #cc0000;
+}
+
+.empty-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #aaa;
+    padding: 40px;
+    font-size: 1.1em;
+}
+
+.rarity-common { border-color: #9d9d9d; }
+.rarity-uncommon { border-color: #1eff00; }
+.rarity-rare { border-color: #0070dd; }
+.rarity-epic { border-color: #a335ee; }
+.rarity-legendary { border-color: #ff8000; }
+.rarity-mythic { border-color: #e6cc80; box-shadow: 0 0 20px #e6cc80; }
+
+.achievements {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+}
+
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.achievement-card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid #555;
+    transition: all 0.3s ease;
+}
+
+.achievement-card.unlocked {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.2);
+}
+
+.achievement-icon {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.achievement-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.achievement-desc {
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.collection {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.collection-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.collection-category {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.category-name {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.progress-bar {
+    background: rgba(0, 0, 0, 0.3);
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    height: 100%;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.2s ease;
+    font-weight: bold;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 5px currentColor; }
+    50% { box-shadow: 0 0 20px currentColor; }
+}
+
+.legendary-glow {
+    animation: glow 2s infinite;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚔️ Mystic Chest Hunter ⚔️</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">💰 Gold:</span>
+                    <span class="stat-value" id="gold">100</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">📦 Chests Opened:</span>
+                    <span class="stat-value" id="chestsOpened">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">⭐ Total Value:</span>
+                    <span class="stat-value" id="totalValue">0</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="game-area">
+            <section class="chest-shop">
+                <h2>🏪 Chest Shop</h2>
+                <div class="chest-grid" id="chestGrid"></div>
+            </section>
+
+            <section class="opening-area" id="openingArea">
+                <h2>✨ Opening Chest...</h2>
+                <div class="chest-animation" id="chestAnimation"></div>
+                <div class="reward-display" id="rewardDisplay"></div>
+            </section>
+        </div>
+
+        <section class="inventory">
+            <div class="inventory-header">
+                <h2>🎒 Inventory</h2>
+                <div class="inventory-controls">
+                    <button class="btn btn-secondary" id="sortBtn">Sort by Value</button>
+                    <button class="btn btn-danger" id="sellAllBtn">Sell All</button>
+                </div>
+            </div>
+            <div class="inventory-grid" id="inventoryGrid">
+                <p class="empty-message">Your inventory is empty. Open some chests!</p>
+            </div>
+        </section>
+
+        <section class="achievements">
+            <h2>🏆 Achievements</h2>
+            <div class="achievement-grid" id="achievementGrid"></div>
+        </section>
+
+        <section class="collection">
+            <h2>📚 Collection</h2>
+            <div class="collection-stats" id="collectionStats"></div>
+        </section>
+    </div>
+
+    <script>
+const gameState = {
+    gold: 100,
+    chestsOpened: 0,
+    totalValue: 0,
+    inventory: [],
+    achievements: [],
+    collection: {
+        weapons: new Set(),
+        armor: new Set(),
+        potions: new Set(),
+        special: new Set()
+    }
+};
+
+const chestTypes = [
+    { name: 'Wooden Chest', rarity: 'common', cost: 10, icon: '📦', itemCount: { min: 1, max: 2 }, rarityWeights: { common: 70, uncommon: 25, rare: 4, epic: 1, legendary: 0, mythic: 0 } },
+    { name: 'Bronze Chest', rarity: 'uncommon', cost: 50, icon: '🎁', itemCount: { min: 2, max: 3 }, rarityWeights: { common: 40, uncommon: 40, rare: 15, epic: 4, legendary: 1, mythic: 0 } },
+    { name: 'Silver Chest', rarity: 'rare', cost: 200, icon: '💎', itemCount: { min: 3, max: 4 }, rarityWeights: { common: 20, uncommon: 35, rare: 30, epic: 12, legendary: 3, mythic: 0 } },
+    { name: 'Golden Chest', rarity: 'epic', cost: 1000, icon: '👑', itemCount: { min: 4, max: 5 }, rarityWeights: { common: 5, uncommon: 20, rare: 35, epic: 30, legendary: 9, mythic: 1 } },
+    { name: 'Diamond Chest', rarity: 'legendary', cost: 5000, icon: '✨', itemCount: { min: 5, max: 7 }, rarityWeights: { common: 0, uncommon: 10, rare: 25, epic: 35, legendary: 25, mythic: 5 } }
+];
+
+const itemTemplates = {
+    weapons: { icon: '⚔️', names: ['Sword', 'Bow', 'Staff', 'Dagger', 'Axe', 'Hammer', 'Spear', 'Crossbow', 'Wand', 'Katana'], prefixes: ['Rusty', 'Sharp', 'Blessed', 'Cursed', 'Ancient', 'Mystic', 'Dragon', 'Phoenix', 'Shadow', 'Light'], baseValue: 20 },
+    armor: { icon: '🛡️', names: ['Helmet', 'Chestplate', 'Boots', 'Gauntlets', 'Leggings', 'Shield', 'Pauldrons', 'Bracers'], prefixes: ['Leather', 'Iron', 'Steel', 'Mithril', 'Dragon', 'Divine', 'Demon', 'Crystal', 'Obsidian'], baseValue: 25 },
+    potions: { icon: '🧪', names: ['Health Potion', 'Mana Potion', 'Strength Potion', 'Speed Potion', 'Defense Potion', 'Luck Potion'], prefixes: ['Minor', 'Lesser', 'Greater', 'Superior', 'Supreme', 'Ultimate'], baseValue: 15 },
+    special: { icon: '🌟', names: ['Pet', 'Mount', 'Artifact', 'Relic', 'Gem', 'Crown', 'Ring', 'Amulet', 'Orb', 'Scroll'], prefixes: ['Rare', 'Exotic', 'Legendary', 'Mythical', 'Celestial', 'Infernal', 'Ethereal', 'Prismatic'], baseValue: 50 }
+};
+
+const rarityMultipliers = {
+    common: { multiplier: 1, color: '#9d9d9d', name: 'Common' },
+    uncommon: { multiplier: 2, color: '#1eff00', name: 'Uncommon' },
+    rare: { multiplier: 5, color: '#0070dd', name: 'Rare' },
+    epic: { multiplier: 10, color: '#a335ee', name: 'Epic' },
+    legendary: { multiplier: 25, color: '#ff8000', name: 'Legendary' },
+    mythic: { multiplier: 100, color: '#e6cc80', name: 'Mythic' }
+};
+
+const achievementsList = [
+    { id: 'first_chest', name: 'First Steps', desc: 'Open your first chest', icon: '🎉', check: (state) => state.chestsOpened >= 1 },
+    { id: 'chest_10', name: 'Enthusiast', desc: 'Open 10 chests', icon: '📦', check: (state) => state.chestsOpened >= 10 },
+    { id: 'chest_50', name: 'Collector', desc: 'Open 50 chests', icon: '🎁', check: (state) => state.chestsOpened >= 50 },
+    { id: 'chest_100', name: 'Master Hunter', desc: 'Open 100 chests', icon: '👑', check: (state) => state.chestsOpened >= 100 },
+    { id: 'rich', name: 'Wealthy', desc: 'Accumulate 10,000 gold', icon: '💰', check: (state) => state.gold >= 10000 },
+    { id: 'legendary_find', name: 'Legendary Find', desc: 'Find a Legendary item', icon: '⭐', check: (state) => state.inventory.some(item => item.rarity === 'legendary') },
+    { id: 'mythic_find', name: 'Mythic Discovery', desc: 'Find a Mythic item', icon: '✨', check: (state) => state.inventory.some(item => item.rarity === 'mythic') },
+    { id: 'full_weapon', name: 'Arsenal', desc: 'Collect 10 different weapons', icon: '⚔️', check: (state) => state.collection.weapons.size >= 10 },
+    { id: 'value_100k', name: 'Fortune', desc: 'Earn 100,000 total value', icon: '💎', check: (state) => state.totalValue >= 100000 }
+];
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function weightedRandom(weights) {
+    const total = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
+    let random = Math.random() * total;
+    for (const [key, weight] of Object.entries(weights)) {
+        random -= weight;
+        if (random <= 0) return key;
+    }
+    return Object.keys(weights)[0];
+}
+
+function generateItem(chestRarity) {
+    const typeKeys = Object.keys(itemTemplates);
+    const type = typeKeys[randomInt(0, typeKeys.length - 1)];
+    const template = itemTemplates[type];
+    const rarityWeights = chestTypes.find(c => c.rarity === chestRarity).rarityWeights;
+    const itemRarity = weightedRandom(rarityWeights);
+    const prefix = template.prefixes[randomInt(0, template.prefixes.length - 1)];
+    const name = template.names[randomInt(0, template.names.length - 1)];
+    const rarityInfo = rarityMultipliers[itemRarity];
+    const value = Math.floor(template.baseValue * rarityInfo.multiplier * (0.8 + Math.random() * 0.4));
+    return {
+        id: Date.now() + Math.random(),
+        type: type,
+        name: `${prefix} ${name}`,
+        rarity: itemRarity,
+        rarityName: rarityInfo.name,
+        icon: template.icon,
+        value: value,
+        color: rarityInfo.color
+    };
+}
+
+function openChest(chest) {
+    if (gameState.gold < chest.cost) {
+        alert('Not enough gold!');
+        return;
+    }
+    gameState.gold -= chest.cost;
+    gameState.chestsOpened++;
+    const itemCount = randomInt(chest.itemCount.min, chest.itemCount.max);
+    const items = [];
+    for (let i = 0; i < itemCount; i++) {
+        items.push(generateItem(chest.rarity));
+    }
+    items.forEach(item => {
+        gameState.inventory.push(item);
+        gameState.totalValue += item.value;
+        gameState.collection[item.type].add(item.name);
+    });
+    showChestOpening(chest, items);
+    updateUI();
+    checkAchievements();
+    saveGame();
+}
+
+function showChestOpening(chest, items) {
+    const openingArea = document.getElementById('openingArea');
+    const chestAnimation = document.getElementById('chestAnimation');
+    const rewardDisplay = document.getElementById('rewardDisplay');
+    openingArea.classList.remove('hidden');
+    chestAnimation.innerHTML = chest.icon;
+    chestAnimation.classList.add('opening');
+    rewardDisplay.innerHTML = '';
+    setTimeout(() => {
+        chestAnimation.classList.remove('opening');
+        items.forEach((item, index) => {
+            setTimeout(() => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `reward-item rarity-${item.rarity}`;
+                itemDiv.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-rarity">${item.rarityName}</div>
+                    <div class="item-value">${item.value} gold</div>
+                `;
+                rewardDisplay.appendChild(itemDiv);
+            }, index * 200);
+        });
+    }, 1000);
+}
+
+function sellItem(itemId) {
+    const itemIndex = gameState.inventory.findIndex(item => item.id === itemId);
+    if (itemIndex !== -1) {
+        const item = gameState.inventory[itemIndex];
+        gameState.gold += item.value;
+        gameState.inventory.splice(itemIndex, 1);
+        updateUI();
+        saveGame();
+    }
+}
+
+function sellAllItems() {
+    if (gameState.inventory.length === 0) {
+        alert('No items to sell!');
+        return;
+    }
+    const totalValue = gameState.inventory.reduce((sum, item) => sum + item.value, 0);
+    if (confirm(`Sell all ${gameState.inventory.length} items for ${totalValue} gold?`)) {
+        gameState.gold += totalValue;
+        gameState.inventory = [];
+        updateUI();
+        saveGame();
+    }
+}
+
+function sortInventory() {
+    gameState.inventory.sort((a, b) => b.value - a.value);
+    updateUI();
+}
+
+function checkAchievements() {
+    achievementsList.forEach(achievement => {
+        if (!gameState.achievements.includes(achievement.id) && achievement.check(gameState)) {
+            gameState.achievements.push(achievement.id);
+        }
+    });
+    updateAchievements();
+}
+
+function updateUI() {
+    document.getElementById('gold').textContent = gameState.gold.toLocaleString();
+    document.getElementById('chestsOpened').textContent = gameState.chestsOpened.toLocaleString();
+    document.getElementById('totalValue').textContent = gameState.totalValue.toLocaleString();
+    updateChestShop();
+    updateInventory();
+    updateCollection();
+}
+
+function updateChestShop() {
+    const chestGrid = document.getElementById('chestGrid');
+    chestGrid.innerHTML = '';
+    chestTypes.forEach(chest => {
+        const canAfford = gameState.gold >= chest.cost;
+        const chestDiv = document.createElement('div');
+        chestDiv.className = `chest-card ${canAfford ? '' : 'disabled'}`;
+        chestDiv.setAttribute('data-rarity', chest.rarity);
+        chestDiv.innerHTML = `
+            <div class="chest-info">
+                <div class="chest-name">${chest.name}</div>
+                <div class="chest-price">💰 ${chest.cost} gold</div>
+                <div class="chest-chance">${chest.itemCount.min}-${chest.itemCount.max} items</div>
+            </div>
+            <div class="chest-icon">${chest.icon}</div>
+        `;
+        if (canAfford) {
+            chestDiv.addEventListener('click', () => openChest(chest));
+        }
+        chestGrid.appendChild(chestDiv);
+    });
+}
+
+function updateInventory() {
+    const inventoryGrid = document.getElementById('inventoryGrid');
+    inventoryGrid.innerHTML = '';
+    if (gameState.inventory.length === 0) {
+        inventoryGrid.innerHTML = '<p class="empty-message">Your inventory is empty. Open some chests!</p>';
+        return;
+    }
+    gameState.inventory.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = `inventory-item rarity-${item.rarity}`;
+        itemDiv.innerHTML = `
+            <button class="sell-btn" onclick="sellItem(${item.id})">Sell</button>
+            <div class="item-icon">${item.icon}</div>
+            <div class="item-name">${item.name}</div>
+            <div class="item-type">${item.type}</div>
+            <div class="item-rarity">${item.rarityName}</div>
+            <div class="item-value">${item.value} 💰</div>
+        `;
+        inventoryGrid.appendChild(itemDiv);
+    });
+}
+
+function updateAchievements() {
+    const achievementGrid = document.getElementById('achievementGrid');
+    achievementGrid.innerHTML = '';
+    achievementsList.forEach(achievement => {
+        const unlocked = gameState.achievements.includes(achievement.id);
+        const achDiv = document.createElement('div');
+        achDiv.className = `achievement-card ${unlocked ? 'unlocked' : ''}`;
+        achDiv.innerHTML = `
+            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-name">${achievement.name}</div>
+            <div class="achievement-desc">${achievement.desc}</div>
+        `;
+        achievementGrid.appendChild(achDiv);
+    });
+}
+
+function updateCollection() {
+    const collectionStats = document.getElementById('collectionStats');
+    collectionStats.innerHTML = '';
+    const categories = [
+        { key: 'weapons', name: 'Weapons', icon: '⚔️', total: itemTemplates.weapons.names.length * itemTemplates.weapons.prefixes.length },
+        { key: 'armor', name: 'Armor', icon: '🛡️', total: itemTemplates.armor.names.length * itemTemplates.armor.prefixes.length },
+        { key: 'potions', name: 'Potions', icon: '🧪', total: itemTemplates.potions.names.length * itemTemplates.potions.prefixes.length },
+        { key: 'special', name: 'Special', icon: '🌟', total: itemTemplates.special.names.length * itemTemplates.special.prefixes.length }
+    ];
+    categories.forEach(category => {
+        const collected = gameState.collection[category.key].size;
+        const percentage = Math.floor((collected / category.total) * 100);
+        const catDiv = document.createElement('div');
+        catDiv.className = 'collection-category';
+        catDiv.innerHTML = `
+            <div class="category-name">${category.icon} ${category.name}</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percentage}%">
+                    ${collected}/${category.total}
+                </div>
+            </div>
+        `;
+        collectionStats.appendChild(catDiv);
+    });
+}
+
+function saveGame() {
+    const saveData = {
+        ...gameState,
+        collection: {
+            weapons: Array.from(gameState.collection.weapons),
+            armor: Array.from(gameState.collection.armor),
+            potions: Array.from(gameState.collection.potions),
+            special: Array.from(gameState.collection.special)
+        }
+    };
+    localStorage.setItem('mysticChestHunter', JSON.stringify(saveData));
+}
+
+function loadGame() {
+    const saveData = localStorage.getItem('mysticChestHunter');
+    if (saveData) {
+        const data = JSON.parse(saveData);
+        gameState.gold = data.gold;
+        gameState.chestsOpened = data.chestsOpened;
+        gameState.totalValue = data.totalValue;
+        gameState.inventory = data.inventory;
+        gameState.achievements = data.achievements;
+        gameState.collection = {
+            weapons: new Set(data.collection.weapons),
+            armor: new Set(data.collection.armor),
+            potions: new Set(data.collection.potions),
+            special: new Set(data.collection.special)
+        };
+    }
+}
+
+document.getElementById('sortBtn').addEventListener('click', sortInventory);
+document.getElementById('sellAllBtn').addEventListener('click', sellAllItems);
+window.sellItem = sellItem;
+
+loadGame();
+updateUI();
+updateAchievements();
+    </script>
+</body>
+</html>
